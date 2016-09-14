@@ -1,1 +1,2 @@
-# Sukienhay API Client PHP
+# skh-api-client-php
+SKH API CLIENT PHP LIBRARY
