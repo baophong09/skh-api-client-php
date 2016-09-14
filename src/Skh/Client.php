@@ -7,6 +7,10 @@ class Client
     private $publicKey;
 
     private $secretKey;
-    
+
     public function __construct($publicKey, $secretKey)
+    {
+        $this->publicKey = $publicKey;
+        $this->secretKey = $secretKey;
+    }
 }
