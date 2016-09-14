@@ -1,0 +1,24 @@
+{
+    "name": "baophong09/skh-api-client-php",
+    "description": "SKH Api Client",
+    "authors": [
+        {
+            "name": "Dinh Phong",
+            "email": "dinhphong.developer@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Skh\\": "src/Skh/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        }
+    },
+    "minimum-stability": "dev"
+}
