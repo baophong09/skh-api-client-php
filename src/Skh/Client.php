@@ -39,7 +39,7 @@ class Client
             'exp'           =>  time() + 60,
             'data'          =>  [
                 'public_key'    =>  $publicKey,
-                'secret_key'    =>  base64_encode($secretKey)
+                'secret_key'    =>  $this->secretKey
             ]
         ];
 
