@@ -2,26 +2,20 @@
 
 namespace Skh\Token;
 
+use \Firebase\JWT\JWT as JWT;
+
 class Crypt
 {
     private $privateKey;
 
-    private $iv;
-
     public function __construct($privateKey = '')
     {
-        $this->privateKey = md5($privateKey);
-        $this->iv = mcrypt_create_iv(mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_CBC), MCRYPT_RAND);
+        $this->privateKey = $privateKey;
     }
 
     public function encrypt($data)
     {
-        return base64_encode(mcrypt_encrypt(MCRYPT_RIJNDAEL_256, $this->privateKey, $data, MCRYPT_MODE_ECB, $this->iv));
-    }
-
-    public function decrypt($data)
-    {
-        return trim(mcrypt_decrypt(MCRYPT_RIJNDAEL_256, $this->privateKey, base64_decode($data), MCRYPT_MODE_ECB, $this->iv));
+        return JWT::encode($data, $this->privateKey);
     }
 
     /**

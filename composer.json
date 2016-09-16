@@ -9,7 +9,6 @@
     ],
     "require": {
         "php": ">=5.5.0",
-        "guzzlehttp/guzzle": "6.0",
         "firebase/php-jwt": "3.0"
     },
     "autoload": {
