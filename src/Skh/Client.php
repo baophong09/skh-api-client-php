@@ -7,6 +7,8 @@ use \Skh\Token\Token as Token;
 
 class Client
 {
+    public $accessToken;
+
     private $publicKey;
 
     private $secretKey;
@@ -21,33 +23,16 @@ class Client
 
     const API_SERVER = 'http://api.sukienhay.com/';
 
-    const VERSION = 'v1/';   
+    const VERSION = 'v1/';
 
     public function __construct($publicKey, $secretKey)
     {
         $this->publicKey = $publicKey;
-        $this->secretKey = md5($secretKey);
+        $this->secretKey = md5($secretKey.$publicKey);
         $this->serverName = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
         $this->request = new Request();
         $this->token = new Token($this->secretKey);
         $this->cookie = isset($_COOKIE["SKH_API_COOKIE"]) ? $_COOKIE["SKH_API_COOKIE"] : "";
-    }
-
-    private function getVerifyApplication($publicKey, $secretKey, $cookie)
-    {
-        $data = [
-            'iat'           =>  time(),
-            'iss'           =>  $this->serverName,
-            'public_key'    =>  $publicKey,
-            'exp'           =>  time() + 60,
-            'data'          =>  [
-                'public_key'    =>  $publicKey,
-                'secret_key'    =>  $secretKey,
-                'cookie'        =>  $cookie
-            ]
-        ];
-
-        return $this->token->get($data);
     }
 
     public function getAccessToken()
@@ -67,6 +52,24 @@ class Client
 
         return $res;
     }
+
+    private function getVerifyApplication($publicKey, $secretKey, $cookie)
+    {
+        $data = [
+            'iat'           =>  time(),
+            'iss'           =>  $this->serverName,
+            'public_key'    =>  $publicKey,
+            'exp'           =>  time() + 60,
+            'data'          =>  [
+                'public_key'    =>  $publicKey,
+                'secret_key'    =>  $secretKey,
+                'cookie'        =>  $cookie
+            ]
+        ];
+
+        return $this->token->get($data);
+    }
+
 
     public function get($url, $params)
     {
