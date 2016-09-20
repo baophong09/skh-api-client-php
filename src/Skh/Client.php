@@ -7,6 +7,10 @@ use \Skh\Token\Token as Token;
 
 class Client
 {
+    public static $instance;
+
+    public static $config;
+
     public $accessToken;
 
     private $publicKey;
@@ -22,6 +26,24 @@ class Client
     const API_SERVER = 'http://api.sukienhay.com/';
 
     const VERSION = 'v1/';
+
+    public static function getInstance()
+    {
+        if(is_null(static::$instance)) {
+            static::$instance = new self(static::$config["public_key"], static::$config["secret_key"]);
+        }
+
+        return static::$instance;
+    }
+
+    public static function config($config)
+    {
+        foreach($config as $k => $v) {
+            static::$config[$k] = $v;
+        }
+
+        return static::$config;
+    }
 
     public function __construct($publicKey, $secretKey)
     {
@@ -48,13 +70,13 @@ class Client
 
         if($decoded && $decoded->success === true && $decoded->access_token) {
             $this->accessToken = $decoded->access_token;
-            setcookie("SKH_API_COOKIE", $this->token->encrypt([
+
+            $this->setCookie([
                 "token" => $this->accessToken,
                 "ei"    => $decoded->ei,
                 "eid"   => $decoded->expire_in
-            ]), $decoded->ei);
+            ], $decoded->ei);
 
-            $this->cookie = $_COOKIE["SKH_API_COOKIE"];
         }
 
         return $res;
@@ -67,7 +89,22 @@ class Client
 
     public function getCookie()
     {
-        return $this->token->decrypt($this->cookie);
+        $cookie = $this->token->decrypt($this->cookie);
+
+        if($cookie && $cookie->ie > time()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function setCookie($data, $time)
+    {
+        setcookie("SKH_API_COOKIE", $this->token->encrypt($data), $time);
+
+        $this->cookie = $this->token->encrypt($time);
+
+        return true;
     }
 
     public function token()
@@ -76,26 +113,26 @@ class Client
     }
 
 
-    public function get($url, $params)
+    public function get($url, $params = [], $token = null)
     {
         $res = $this->request->request('GET', self::API_SERVER . self::VERSION . $url, $params);
 
         return $res;
     }
 
-    public function post($url, $params)
+    public function post($url, $params = [], $token = null)
     {
         $res = $this->request->request('POST', self::API_SERVER . self::VERSION . $url, $params);
 
         return $res;
     }
 
-    public function put($url, $params)
+    public function put($url, $params = [], $token = null)
     {
 
     }
 
-    public function delete($url, $params)
+    public function delete($url, $params = [], $token = null)
     {
 
     }
