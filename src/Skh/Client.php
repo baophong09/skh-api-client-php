@@ -13,8 +13,6 @@ class Client
 
     private $secretKey;
 
-    private $client;
-
     private $serverName;
 
     private $request;
@@ -33,41 +31,48 @@ class Client
         $this->request = new Request();
         $this->token = new Token($this->secretKey);
         $this->cookie = isset($_COOKIE["SKH_API_COOKIE"]) ? $_COOKIE["SKH_API_COOKIE"] : "";
+
+        if($this->cookie) {
+            $this->accessToken = $this->token->decrypt($this->cookie);
+        }
     }
 
     public function getAccessToken()
     {
         $res = $this->post('token/generate', [
-            'verify_token'  =>  $this->getVerifyApplication($this->publicKey, $this->secretKey, $this->cookie),
+            'verify_token'  =>  $this->getVerifyApplicationToken($this->publicKey, $this->secretKey, $this->cookie),
             'public_key'    =>  $this->publicKey
         ]);
-
-        dd($res);
 
         $decoded = json_decode($res);
 
         if($decoded && $decoded->success === true && $decoded->access_token) {
-            setcookie("SKH_API_COOKIE", $this->token->get($decoded->access_token), $decoded->ei);
+            $this->accessToken = $decoded->access_token;
+            setcookie("SKH_API_COOKIE", $this->token->encrypt([
+                "token" => $this->accessToken,
+                "ei"    => $decoded->ei,
+                "eid"   => $decoded->expire_in
+            ]), $decoded->ei);
+
+            $this->cookie = $_COOKIE["SKH_API_COOKIE"];
         }
 
         return $res;
     }
 
-    private function getVerifyApplication($publicKey, $secretKey, $cookie)
+    public function haveCookie()
     {
-        $data = [
-            'iat'           =>  time(),
-            'iss'           =>  $this->serverName,
-            'public_key'    =>  $publicKey,
-            'exp'           =>  time() + 60,
-            'data'          =>  [
-                'public_key'    =>  $publicKey,
-                'secret_key'    =>  $secretKey,
-                'cookie'        =>  $cookie
-            ]
-        ];
+        return (isset($this->cookie) && $this->cookie) ? $this->cookie : false;
+    }
 
-        return $this->token->get($data);
+    public function getCookie()
+    {
+        return $this->token->decrypt($this->cookie);
+    }
+
+    public function token()
+    {
+        return ($this->accessToken) ? $this->accessToken : "";
     }
 
 
@@ -93,5 +98,22 @@ class Client
     public function delete($url, $params)
     {
 
+    }
+
+    private function getVerifyApplicationToken($publicKey, $secretKey, $cookie)
+    {
+        $data = [
+            'iat'           =>  time(),
+            'iss'           =>  $this->serverName,
+            'public_key'    =>  $publicKey,
+            'exp'           =>  time() + 60,
+            'data'          =>  [
+                'public_key'    =>  $publicKey,
+                'secret_key'    =>  $secretKey,
+                'cookie'        =>  $cookie
+            ]
+        ];
+
+        return $this->token->encrypt($data);
     }
 }
