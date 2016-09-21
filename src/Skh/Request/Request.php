@@ -14,13 +14,14 @@ class Request
         curl_setopt($this->curl, CURLOPT_HTTPHEADER, array('Accept: application/json'));
     }
 
-    public function setUrl($url, $token)
+    public function setUrl($url, $token = null)
     {
         $this->url = filter_var(trim($url,'&'), FILTER_SANITIZE_URL);
         curl_setopt($this->curl, CURLOPT_URL, $this->url);
         curl_setopt($this->curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            "Authorization: Bearer ".$token
+        curl_setopt($this->curl, CURLOPT_HTTPHEADER, [
+            "Authorization: Bearer ".$token,
+            "Content-Type: multipart/form-data"
         ]);
     }
 
@@ -42,21 +43,23 @@ class Request
         }
 
         $this->setUrl($url, $token);
-        return $this->exec($this->curl);
+        return $this->exec();
     }
 
     public function post($url, $params, $token = null)
     {
         $this->setUrl($url, $token);
         curl_setopt($this->curl, CURLOPT_POSTFIELDS, $params);
-        return $this->exec($this->curl);
+        return $this->exec();
     }
 
-    public function exec($ch)
+    public function exec()
     {
-        $response = curl_exec($ch);
+        $response = curl_exec($this->curl);
 
-        curl_close($ch);
+        curl_close($this->curl);
+
+        $this->curl = null;
 
         return $response;
     }

@@ -55,7 +55,9 @@ class Client
         $this->cookie = isset($_COOKIE["SKH_API_COOKIE"]) ? $_COOKIE["SKH_API_COOKIE"] : "";
 
         if($this->cookie) {
-            $this->accessToken = $this->token->decrypt($this->cookie);
+            $cookie = $this->token->decrypt($this->cookie);
+
+            $this->accessToken = isset($cookie->token) ? $cookie->token : "";
         }
     }
 
@@ -91,8 +93,8 @@ class Client
     {
         $cookie = $this->token->decrypt($this->cookie);
 
-        if($cookie && $cookie->ie > time()) {
-            return true;
+        if($cookie && $cookie->ei > time()) {
+            return $cookie;
         }
 
         return false;
@@ -100,9 +102,9 @@ class Client
 
     public function setCookie($data, $time)
     {
-        setcookie("SKH_API_COOKIE", $this->token->encrypt($data), $time);
+        $this->cookie = $this->token->encrypt($data);
 
-        $this->cookie = $this->token->encrypt($time);
+        setcookie("SKH_API_COOKIE", $this->cookie, $time);
 
         return true;
     }
