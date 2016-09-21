@@ -11,17 +11,22 @@ class Request
     public function __construct()
     {
         $this->curl = curl_init();
-        curl_setopt($this->curl, CURLOPT_HTTPHEADER, array('Accept: application/json'));
     }
 
     public function setUrl($url, $token = null)
     {
+        if(!$this->curl) {
+            $this->curl = curl_init();
+        }
+
         $this->url = filter_var(trim($url,'&'), FILTER_SANITIZE_URL);
+
         curl_setopt($this->curl, CURLOPT_URL, $this->url);
         curl_setopt($this->curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($this->curl, CURLOPT_HTTPHEADER, [
             "Authorization: Bearer ".$token,
-            "Content-Type: multipart/form-data"
+            "Content-Type: multipart/form-data",
+            "Accept: application/json"
         ]);
     }
 
