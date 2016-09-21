@@ -113,27 +113,33 @@ class Client
     }
 
 
-    public function get($url, $params = [], $token = null)
+    public function get($url, $params = [])
     {
-        $res = $this->request->request('GET', self::API_SERVER . self::VERSION . $url, $params);
+        $accessToken = $this->accessToken;
+
+        $res = $this->request->request('GET', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
 
         return $res;
     }
 
-    public function post($url, $params = [], $token = null)
+    public function post($url, $params = [])
     {
-        $res = $this->request->request('POST', self::API_SERVER . self::VERSION . $url, $params);
+        $accessToken = $this->accessToken;
+
+        $res = $this->request->request('POST', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
 
         return $res;
     }
 
-    public function put($url, $params = [], $token = null)
+    public function put($url, $params = [])
     {
+        $accessToken = $this->accessToken;
 
     }
 
-    public function delete($url, $params = [], $token = null)
+    public function delete($url, $params = [])
     {
+        $accessToken = $this->accessToken;
 
     }
 
