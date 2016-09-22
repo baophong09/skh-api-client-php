@@ -55,7 +55,17 @@ class Client
         $this->cookie = isset($_COOKIE["SKH_API_COOKIE"]) ? $_COOKIE["SKH_API_COOKIE"] : "";
 
         if($this->cookie) {
-            $cookie = $this->token->decrypt($this->cookie);
+            if(!$cookie = $this->token->decrypt($this->cookie)) {
+
+                // renew cookie
+                try {
+                    $this->getAccessToken();
+                } catch (\Exception $e) {
+                    echo 'Caught exception: '. $e->getMessage() . "\n";
+                }
+
+                $cookie = $this->token->decrypt($this->cookie);
+            }
 
             $this->accessToken = isset($cookie->token) ? $cookie->token : "";
         }
@@ -79,6 +89,8 @@ class Client
                 "eid"   => $decoded->expire_in
             ], $decoded->ei);
 
+        } else {
+            throw new \Exception("Check Public key && Secret key again");
         }
 
         return $res;
@@ -87,17 +99,6 @@ class Client
     public function haveCookie()
     {
         return (isset($this->cookie) && $this->cookie) ? $this->cookie : false;
-    }
-
-    public function getCookie()
-    {
-        $cookie = $this->token->decrypt($this->cookie);
-
-        if($cookie && $cookie->ei > time()) {
-            return $cookie;
-        }
-
-        return false;
     }
 
     public function setCookie($data, $time)
