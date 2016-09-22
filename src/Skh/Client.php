@@ -185,6 +185,8 @@ class Client
 
     public function post($url, $params = [])
     {
+        // $params = json_encode($params);
+
         $accessToken = $this->accessToken;
 
         $res = $this->request->request('POST', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
