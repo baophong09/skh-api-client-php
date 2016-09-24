@@ -13,8 +13,13 @@ class Token
         $this->crypt = new Crypt($privateKey);
     }
 
-    public function get($data)
+    public function encrypt($data)
     {
         return $this->crypt->encrypt($data);
+    }
+
+    public function decrypt($data)
+    {
+        return $this->crypt->decrypt($data);
     }
 }

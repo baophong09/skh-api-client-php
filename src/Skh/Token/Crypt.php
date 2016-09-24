@@ -18,6 +18,11 @@ class Crypt
         return JWT::encode($data, $this->privateKey);
     }
 
+    public function decrypt($data)
+    {
+        return JWT::decode($data, $this->privateKey, array('HS256'));
+    }
+
     /**
      * Generate a random string
      * @param  int $length
