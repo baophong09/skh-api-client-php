@@ -9,7 +9,7 @@ class Client
 {
     /**
      * @var static $instance Store \Skh\Client (this) Object
-     * Singleton 
+     * Singleton
      */
     public static $instance;
 
@@ -61,7 +61,7 @@ class Client
     /**
      * @static Get current instance
      * @param null
-     * 
+     *
      * @return Object \Skh\Client (this)
      */
     public static function getInstance()
@@ -76,7 +76,7 @@ class Client
     /**
      * @static Add config
      * @param Array $config
-     * 
+     *
      * @return static::$config
      */
     public static function config($config)
@@ -95,8 +95,8 @@ class Client
      *
      * When new Client() store PublicKey, Encrypt SecretKey, store serverName
      * Init Request Object (use for send request), Token Object (use for encrypt client data)
-     * If have Cookie: 
-     *     + Can't decrypt (changed private key): Get Access Token from API Server check 
+     * If have Cookie:
+     *     + Can't decrypt (changed private key): Get Access Token from API Server check
      *       public key and secret key
      *     + Can decrypt: store AccessToken
      */
@@ -123,12 +123,19 @@ class Client
                 }
 
                 $cookie = $this->token->decrypt($this->cookie);
-            } 
+            }
 
             $this->accessToken = isset($cookie->token) ? $cookie->token : "";
         }
     }
 
+    /**
+     * Get Access Token from API Server
+     *
+     * @param null
+     *
+     * @return Set Cookie
+     */
     public function getAccessToken()
     {
         $res = $this->post('token/generate', [
@@ -154,11 +161,23 @@ class Client
         return $res;
     }
 
+    /**
+     * Have Cookie
+     *
+     * @return boolean
+     */
     public function haveCookie()
     {
         return (isset($this->cookie) && $this->cookie) ? $this->cookie : false;
     }
 
+    /**
+     * Set Cookie. Store new access token and expire time
+     * @param Array $data
+     * @param Integer $time
+     *
+     * @return void
+     */
     public function setCookie($data, $time)
     {
         $this->cookie = $this->token->encrypt($data);
@@ -168,12 +187,24 @@ class Client
         return true;
     }
 
+    /**
+     * Get current access token
+     *
+     * @return String $this->accessToken
+     */
     public function token()
     {
         return ($this->accessToken) ? $this->accessToken : "";
     }
 
-
+    /**
+     * Send a HTTP GET Request
+     *
+     * @param String $url
+     * @param Array $params
+     *
+     * @return JSON $res
+     */
     public function get($url, $params = [])
     {
         $accessToken = $this->accessToken;
@@ -183,6 +214,14 @@ class Client
         return $res;
     }
 
+    /**
+     * Send a HTTP POST Request
+     *
+     * @param String $url
+     * @param Array $params
+     *
+     * @return JSON $res
+     */
     public function post($url, $params = [])
     {
         // $params = json_encode($params);
@@ -206,6 +245,15 @@ class Client
 
     }
 
+    /**
+     * Generate a token to verify application
+     *
+     * @param String $publicKey
+     * @param String $secretKey
+     * @param String $cookie
+     *
+     * @return String Token $data
+     */
     private function getVerifyApplicationToken($publicKey, $secretKey, $cookie)
     {
         $data = [
