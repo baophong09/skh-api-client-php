@@ -104,6 +104,7 @@ class Client
     {
         $this->publicKey = $publicKey;
         $this->secretKey = md5($secretKey.$publicKey);
+
         $this->serverName = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
 
         $this->request = new Request();
@@ -143,16 +144,14 @@ class Client
             'public_key'    =>  $this->publicKey
         ]);
 
-        $decoded = json_decode($res);
-
-        if($decoded && $decoded->success === true && $decoded->access_token) {
-            $this->accessToken = $decoded->access_token;
+        if(isset($res->success) && $res && $res->success === true && isset($res->access_token) && $res->access_token) {
+            $this->accessToken = $res->access_token;
 
             $this->setCookie([
                 "token" => $this->accessToken,
-                "ei"    => $decoded->ei,
-                "eid"   => $decoded->expire_in
-            ], $decoded->ei);
+                "ei"    => $res->ei,
+                "eid"   => $res->expire_in
+            ], $res->ei);
 
         } else {
             throw new \Exception("Check Public key && Secret key again");
@@ -211,6 +210,20 @@ class Client
 
         $res = $this->request->request('GET', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
 
+        $res = json_decode($res);
+
+        if (isset($res->access_token) && $res->access_token) {
+            $this->accessToken = $res->access_token;
+
+            $data = [
+                "token" => $this->accessToken,
+                "ei"    => $res->ei,
+                "eid"   => $res->expire_in
+            ];
+
+            $this->setCookie($data, $res->ei);
+        }
+
         return $res;
     }
 
@@ -229,6 +242,20 @@ class Client
         $accessToken = $this->accessToken;
 
         $res = $this->request->request('POST', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
+
+        $res = json_decode($res);
+
+        if (isset($res->access_token) && $res->access_token) {
+            $this->accessToken = $res->access_token;
+
+            $data = [
+                "token" => $this->accessToken,
+                "ei"    => $res->ei,
+                "eid"   => $res->expire_in
+            ];
+
+            $this->setCookie($data, $res->ei);
+        }
 
         return $res;
     }
