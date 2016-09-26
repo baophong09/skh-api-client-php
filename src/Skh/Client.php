@@ -9,7 +9,7 @@ class Client
 {
     /**
      * @var static $instance Store \Skh\Client (this) Object
-     * Singleton 
+     * Singleton
      */
     public static $instance;
 
@@ -61,7 +61,7 @@ class Client
     /**
      * @static Get current instance
      * @param null
-     * 
+     *
      * @return Object \Skh\Client (this)
      */
     public static function getInstance()
@@ -76,7 +76,7 @@ class Client
     /**
      * @static Add config
      * @param Array $config
-     * 
+     *
      * @return static::$config
      */
     public static function config($config)
@@ -95,8 +95,8 @@ class Client
      *
      * When new Client() store PublicKey, Encrypt SecretKey, store serverName
      * Init Request Object (use for send request), Token Object (use for encrypt client data)
-     * If have Cookie: 
-     *     + Can't decrypt (changed private key): Get Access Token from API Server check 
+     * If have Cookie:
+     *     + Can't decrypt (changed private key): Get Access Token from API Server check
      *       public key and secret key
      *     + Can decrypt: store AccessToken
      */
@@ -104,6 +104,7 @@ class Client
     {
         $this->publicKey = $publicKey;
         $this->secretKey = md5($secretKey.$publicKey);
+
         $this->serverName = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
 
         $this->request = new Request();
@@ -112,8 +113,8 @@ class Client
         $this->cookie = isset($_COOKIE["SKH_API_COOKIE"]) ? $_COOKIE["SKH_API_COOKIE"] : "";
 
         if($this->cookie) {
-
-            if(!($cookie = $this->token->decrypt($this->cookie)) || $cookie->ei <= time()) {
+            $cookie = $this->token->decrypt($this->cookie);
+            if(!$cookie || $cookie->ei <= time()) {
 
                 // renew cookie
                 try {
@@ -123,12 +124,19 @@ class Client
                 }
 
                 $cookie = $this->token->decrypt($this->cookie);
-            } 
+            }
 
             $this->accessToken = isset($cookie->token) ? $cookie->token : "";
         }
     }
 
+    /**
+     * Get Access Token from API Server
+     *
+     * @param null
+     *
+     * @return Set Cookie
+     */
     public function getAccessToken()
     {
         $res = $this->post('token/generate', [
@@ -136,16 +144,14 @@ class Client
             'public_key'    =>  $this->publicKey
         ]);
 
-        $decoded = json_decode($res);
-
-        if($decoded && $decoded->success === true && $decoded->access_token) {
-            $this->accessToken = $decoded->access_token;
+        if(isset($res->success) && $res && $res->success === true && isset($res->access_token) && $res->access_token) {
+            $this->accessToken = $res->access_token;
 
             $this->setCookie([
                 "token" => $this->accessToken,
-                "ei"    => $decoded->ei,
-                "eid"   => $decoded->expire_in
-            ], $decoded->ei);
+                "ei"    => $res->ei,
+                "eid"   => $res->expire_in
+            ], $res->ei);
 
         } else {
             throw new \Exception("Check Public key && Secret key again");
@@ -154,35 +160,91 @@ class Client
         return $res;
     }
 
+    /**
+     * Have Cookie
+     *
+     * @return boolean
+     */
     public function haveCookie()
     {
-        return (isset($this->cookie) && $this->cookie) ? $this->cookie : false;
+        if (isset($this->cookie) && $this->cookie) {
+            $cookie = $this->token->decrypt($this->cookie);
+            
+            if(!$cookie || $cookie->ei <= time()) {
+                return false;
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
+    /**
+     * Set Cookie. Store new access token and expire time
+     * @param Array $data
+     * @param Integer $time
+     *
+     * @return void
+     */
     public function setCookie($data, $time)
     {
         $this->cookie = $this->token->encrypt($data);
 
-        setcookie("SKH_API_COOKIE", $this->cookie, $time);
+        setcookie("SKH_API_COOKIE", $this->cookie, $time, '/');
 
         return true;
     }
 
+    /**
+     * Get current access token
+     *
+     * @return String $this->accessToken
+     */
     public function token()
     {
         return ($this->accessToken) ? $this->accessToken : "";
     }
 
-
+    /**
+     * Send a HTTP GET Request
+     *
+     * @param String $url
+     * @param Array $params
+     *
+     * @return JSON $res
+     */
     public function get($url, $params = [])
     {
         $accessToken = $this->accessToken;
 
         $res = $this->request->request('GET', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
 
+        $res = json_decode($res);
+
+        if (isset($res->access_token) && $res->access_token) {
+            $this->accessToken = $res->access_token;
+
+            $data = [
+                "token" => $this->accessToken,
+                "ei"    => $res->ei,
+                "eid"   => $res->expire_in
+            ];
+
+            $this->setCookie($data, $res->ei);
+        }
+
         return $res;
     }
 
+    /**
+     * Send a HTTP POST Request
+     *
+     * @param String $url
+     * @param Array $params
+     *
+     * @return JSON $res
+     */
     public function post($url, $params = [])
     {
         // $params = json_encode($params);
@@ -190,6 +252,21 @@ class Client
         $accessToken = $this->accessToken;
 
         $res = $this->request->request('POST', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
+
+        $res = json_decode($res);
+
+        if (isset($res->access_token) && $res->access_token) {
+            $this->accessToken = $res->access_token;
+
+            $data = [
+                "token" => $this->accessToken,
+                "ei"    => $res->ei,
+                "eid"   => $res->expire_in
+            ];
+
+            $this->setCookie($data, $res->ei);
+
+        }
 
         return $res;
     }
@@ -206,6 +283,15 @@ class Client
 
     }
 
+    /**
+     * Generate a token to verify application
+     *
+     * @param String $publicKey
+     * @param String $secretKey
+     * @param String $cookie
+     *
+     * @return String Token $data
+     */
     private function getVerifyApplicationToken($publicKey, $secretKey, $cookie)
     {
         $data = [
