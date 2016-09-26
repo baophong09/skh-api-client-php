@@ -265,10 +265,6 @@ class Client
             ];
 
             $this->setCookie($data, $res->ei);
-<<<<<<< HEAD
-
-=======
->>>>>>> aba079e8b2a1f93ac8a4d301c5a29fc2cf1d451a
         }
 
         return $res;
