@@ -1,4 +1,5 @@
 {
+    "minimum-stability": "dev",
     "name": "baophong09/skh-api-client-php",
     "description": "SKH Api Client",
     "authors": [
@@ -9,7 +10,7 @@
     ],
     "require": {
         "php": ">=5.5.0",
-        "baophong09/php-jwt": "1.0.x-dev"
+        "baophong09/php-jwt": "dev-master"
     },
     "autoload": {
         "psr-4": {
@@ -20,6 +21,5 @@
         "branch-alias": {
             "dev-master": "1.0-dev"
         }
-    },
-    "minimum-stability": "dev"
+    }
 }
