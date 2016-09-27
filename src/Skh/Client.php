@@ -253,6 +253,8 @@ class Client
 
         $res = $this->request->request('POST', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
 
+        vd($res);
+
         $res = json_decode($res);
 
         if (isset($res->access_token) && $res->access_token) {

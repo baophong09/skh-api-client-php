@@ -9,7 +9,7 @@
     ],
     "require": {
         "php": ">=5.5.0",
-        "firebase/php-jwt": "3.0"
+        "baophong09/php-jwt": "dev-master"
     },
     "autoload": {
         "psr-4": {
