@@ -187,11 +187,11 @@ class Client
      *
      * @return void
      */
-    public function setCookie($data, $time)
+    public function setCookie($data, $time, $path = '/')
     {
         $this->cookie = $this->token->encrypt($data);
 
-        setcookie("SKH_API_COOKIE", $this->cookie, $time, '/');
+        setcookie("SKH_API_COOKIE", $this->cookie, $time, $path);
 
         return true;
     }
@@ -253,7 +253,7 @@ class Client
 
         $res = $this->request->request('POST', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
 
-        vd($res);
+        // vd($res);
 
         $res = json_decode($res);
 
