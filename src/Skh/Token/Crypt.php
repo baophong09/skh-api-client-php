@@ -6,6 +6,11 @@ use \Firebase\JWT\JWT as JWT;
 
 class Crypt
 {
+    /**
+     * Store private key to decryot
+     * 
+     * @var String $privateKey
+     */
     private $privateKey;
 
     public function __construct($privateKey = '')
