@@ -1,5 +1,4 @@
 {
-    "minimum-stability": "dev",
     "name": "baophong09/skh-api-client-php",
     "description": "SKH Api Client",
     "authors": [
@@ -21,5 +20,6 @@
         "branch-alias": {
             "dev-master": "1.0-dev"
         }
-    }
+    },
+    "minimum-stability": "dev"
 }
