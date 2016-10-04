@@ -2,7 +2,8 @@
 
 namespace Skh;
 
-use \Skh\Request\Request as Request;
+use \Skh\Request\CurlRequest as CurlRequest;
+use \Skh\Request\GuzzleRequest as GuzzleRequest;
 use \Skh\Token\Token as Token;
 
 class Client
@@ -67,7 +68,7 @@ class Client
     public static function getInstance()
     {
         if(is_null(static::$instance)) {
-            static::$instance = new self(static::$config["public_key"], static::$config["secret_key"]);
+            static::$instance = new self(static::$config["public_key"], static::$config["secret_key"], static::$config["type"]);
         }
 
         return static::$instance;
@@ -100,14 +101,19 @@ class Client
      *       public key and secret key
      *     + Can decrypt: store AccessToken
      */
-    public function __construct($publicKey, $secretKey)
+    public function __construct($publicKey, $secretKey, $type)
     {
         $this->publicKey = $publicKey;
         $this->secretKey = md5($secretKey.$publicKey);
 
         $this->serverName = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
 
-        $this->request = new Request();
+        if ($type == "stream") {
+            $this->request = new GuzzleRequest();
+        } elseif ($type == "curl") {
+            $this->request = new CurlRequest();
+        }
+
         $this->token = new Token($this->secretKey);
 
         $this->cookie = isset($_COOKIE["SKH_API_COOKIE"]) ? $_COOKIE["SKH_API_COOKIE"] : "";

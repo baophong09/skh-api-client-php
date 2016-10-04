@@ -2,7 +2,7 @@
 
 namespace Skh\Request;
 
-class Request
+class CurlRequest implements RequestInterface
 {
     public $curl;
 
@@ -55,7 +55,18 @@ class Request
     {
         $this->setUrl($url, $token);
         curl_setopt($this->curl, CURLOPT_POSTFIELDS, $params);
+
         return $this->exec();
+    }
+
+    public function put()
+    {
+
+    }
+
+    public function delete()
+    {
+
     }
 
     public function exec()
