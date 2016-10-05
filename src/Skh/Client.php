@@ -197,7 +197,17 @@ class Client
     {
         $this->cookie = $this->token->encrypt($data);
 
-        setcookie("SKH_API_COOKIE", $this->cookie, $time, $path);
+        $domain = isset($_SERVER["SERVER_NAME"]) ? $_SERVER["SERVER_NAME"] : "";
+        
+        if($domain) {
+            if(static::$config["share_domain"] == true) {
+                setcookie("SKH_API_COOKIE", $this->cookie, $time, $path, $this->getDomain($domain));
+            } else {
+                setcookie("SKH_API_COOKIE", $this->cookie, $time, $path, $domain);
+            }
+        } else {
+            setcookie("SKH_API_COOKIE", $this->cookie, $time, $path);
+        }
 
         return true;
     }
@@ -317,5 +327,16 @@ class Client
         ];
 
         return $this->token->encrypt($data);
+    }
+
+    private function getDomain($url)
+    {
+        $urlArray = explode('.',$url);
+
+        if(count($urlArray) >= 3) {
+            return '.'.$urlArray[1].'.'.$urlArray[2];
+        }
+
+        return ".".$url;
     }
 }
