@@ -238,6 +238,8 @@ class Client
             ];
 
             $this->setCookie($data, $res->ei);
+        } else if(isset($res->errors->need_get_access_token) && $res->errors->need_get_access_token == 1) {
+            $this->getAccessToken();
         }
 
         return $res;
@@ -259,11 +261,10 @@ class Client
 
         $res = $this->request->request('POST', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
 
-        // vd($res);
-
         $res = json_decode($res);
 
         if (isset($res->access_token) && $res->access_token) {
+
             $this->accessToken = $res->access_token;
 
             $data = [
@@ -273,6 +274,8 @@ class Client
             ];
 
             $this->setCookie($data, $res->ei);
+        } else if(isset($res->errors->need_get_access_token) && $res->errors->need_get_access_token == 1) {
+            $this->getAccessToken();
         }
 
         return $res;
