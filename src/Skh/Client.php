@@ -145,10 +145,12 @@ class Client
      */
     public function getAccessToken()
     {
-        $res = $this->post('token/generate', [
+        $response = $this->post('token/generate', [
             'verify_token'  =>  $this->getVerifyApplicationToken($this->publicKey, $this->secretKey, $this->cookie),
             'public_key'    =>  $this->publicKey
         ]);
+
+        $res = json_decode($response);
 
         if(isset($res->success) && $res && $res->success === true && isset($res->access_token) && $res->access_token) {
             $this->accessToken = $res->access_token;
@@ -234,9 +236,9 @@ class Client
     {
         $accessToken = $this->accessToken;
 
-        $res = $this->request->request('GET', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
+        $response = $this->request->request('GET', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
 
-        $res = json_decode($res);
+        $res = json_decode($response);
 
         if (isset($res->access_token) && $res->access_token) {
             $this->accessToken = $res->access_token;
@@ -252,7 +254,8 @@ class Client
             $this->getAccessToken();
         }
 
-        return $res;
+        // return json
+        return $response;
     }
 
     /**
@@ -269,9 +272,9 @@ class Client
 
         $accessToken = $this->accessToken;
 
-        $res = $this->request->request('POST', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
+        $response = $this->request->request('POST', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
 
-        $res = json_decode($res);
+        $res = json_decode($response);
 
         if (isset($res->access_token) && $res->access_token) {
 
@@ -288,7 +291,7 @@ class Client
             $this->getAccessToken();
         }
 
-        return $res;
+        return $response;
     }
 
     public function put($url, $params = [])
