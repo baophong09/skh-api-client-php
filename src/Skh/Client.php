@@ -52,7 +52,7 @@ class Client
     /**
      * API_SERVER: Domain of API Server
      */
-    const API_SERVER = 'http://api.sukienhay.com/';
+    const API_SERVER = 'https://api.sukienhay.com/';
 
     /**
      * VERSION: Version of API
@@ -197,7 +197,17 @@ class Client
     {
         $this->cookie = $this->token->encrypt($data);
 
-        setcookie("SKH_API_COOKIE", $this->cookie, $time, $path);
+        $domain = isset($_SERVER["SERVER_NAME"]) ? $_SERVER["SERVER_NAME"] : "";
+        
+        if($domain) {
+            if(static::$config["share_domain"] == true) {
+                setcookie("SKH_API_COOKIE", $this->cookie, $time, $path, $this->getDomain($domain));
+            } else {
+                setcookie("SKH_API_COOKIE", $this->cookie, $time, $path, $domain);
+            }
+        } else {
+            setcookie("SKH_API_COOKIE", $this->cookie, $time, $path);
+        }
 
         return true;
     }
@@ -238,6 +248,8 @@ class Client
             ];
 
             $this->setCookie($data, $res->ei);
+        } else if(isset($res->errors->need_get_access_token) && $res->errors->need_get_access_token == 1) {
+            $this->getAccessToken();
         }
 
         return $res;
@@ -259,11 +271,10 @@ class Client
 
         $res = $this->request->request('POST', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
 
-        // vd($res);
-
         $res = json_decode($res);
 
         if (isset($res->access_token) && $res->access_token) {
+
             $this->accessToken = $res->access_token;
 
             $data = [
@@ -273,6 +284,8 @@ class Client
             ];
 
             $this->setCookie($data, $res->ei);
+        } else if(isset($res->errors->need_get_access_token) && $res->errors->need_get_access_token == 1) {
+            $this->getAccessToken();
         }
 
         return $res;
@@ -314,5 +327,16 @@ class Client
         ];
 
         return $this->token->encrypt($data);
+    }
+
+    private function getDomain($url)
+    {
+        $urlArray = explode('.',$url);
+
+        if(count($urlArray) >= 3) {
+            return '.'.$urlArray[1].'.'.$urlArray[2];
+        }
+
+        return ".".$url;
     }
 }
