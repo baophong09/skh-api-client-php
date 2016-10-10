@@ -294,12 +294,28 @@ class Client
         return $response;
     }
 
+    /**
+     * Send a HTTP PUT Request
+     *
+     * @param String $url
+     * @param Array $params
+     *
+     * @return JSON $res
+     */
     public function put($url, $params = [])
     {
         $accessToken = $this->accessToken;
 
     }
 
+    /**
+     * Send a HTTP DELETE Request
+     *
+     * @param String $url
+     * @param Array $params
+     *
+     * @return JSON $res
+     */
     public function delete($url, $params = [])
     {
         $accessToken = $this->accessToken;
@@ -332,6 +348,17 @@ class Client
         return $this->token->encrypt($data);
     }
 
+    /**
+     * Get primary domain from domain
+     * Ex: test.sukienhay.com => .sukienhay.com
+     *   : sukienhay.com      => .sukienhay.com
+     *   : abc.xyz.io         => .xyz.io
+     *
+     * @param String $url
+     * @param Array $params
+     *
+     * @return JSON $res
+     */
     private function getDomain($url)
     {
         $urlArray = explode('.',$url);
