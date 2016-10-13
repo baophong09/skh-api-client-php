@@ -7,7 +7,7 @@
  * | @authors       : Dinh Phong                                            |
  * | @github        : baophong09                                            |
  * | @copyright     : Copyright (c) 2016, SUKIENHAY.COM                     |
- * | @since         : Version 1.0.0                                         |
+ * | @since         : Version 2.0.0                                         |
  * | @website       : https://sukienhay.com                                 |
  * | @e-mail        : dinhphong.developer@gmail.com                         |
  * | @require       : PHP version >= 5.5.0                                  |
@@ -18,7 +18,6 @@
 namespace Skh;
 
 use \Skh\Request\CurlRequest as CurlRequest;
-use \Skh\Request\GuzzleRequest as GuzzleRequest;
 use \Skh\Token\Token as Token;
 
 class Client
@@ -123,32 +122,31 @@ class Client
 
         $this->serverName = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
 
-        if ($type == "stream") {
-            $this->request = new GuzzleRequest();
-        } elseif ($type == "curl") {
-            $this->request = new CurlRequest();
-        }
+        $this->request = new CurlRequest();
 
         $this->token = new Token($this->secretKey);
 
         $this->cookie = isset($_COOKIE["SKH_API_COOKIE"]) ? $_COOKIE["SKH_API_COOKIE"] : "";
 
-        if($this->cookie) {
+
+		if($this->cookie) {		
+        	$cookie = $this->token->decrypt($this->cookie);
+		} else {
+			$cookie = null;
+		}
+		
+		// auto renew before expired day three days
+        if(!$cookie || (($cookie->ei - 259200) <= time())) {
+
+			// set new $this->cookie
+            $this->extendToken();
+
+			// Decrypt cookie
             $cookie = $this->token->decrypt($this->cookie);
-            if(!$cookie || $cookie->ei <= time()) {
-
-                // renew cookie
-                try {
-                    $this->getAccessToken();
-                } catch (\Exception $e) {
-                    echo 'Caught exception: '. $e->getMessage() . "\n";
-                }
-
-                $cookie = $this->token->decrypt($this->cookie);
-            }
-
-            $this->accessToken = isset($cookie->token) ? $cookie->token : "";
         }
+
+        $this->accessToken = isset($cookie->token) ? $cookie->token : "";
+    
     }
 
     /**
@@ -168,20 +166,37 @@ class Client
         $res = json_decode($response);
 
         if(isset($res->success) && $res && $res->success === true && isset($res->access_token) && $res->access_token) {
-            $this->accessToken = $res->access_token;
-
-            $this->setCookie([
-                "token" => $this->accessToken,
-                "ei"    => $res->ei,
-                "eid"   => $res->expire_in
-            ], $res->ei);
-
+            return $res;
         } else {
             throw new \Exception("Check Public key && Secret key again");
         }
 
         return $res;
     }
+	
+	/**
+	 * Renew token with new expired time
+	 */
+	public function extendToken()
+	{
+		try {
+			$res = $this->getAccessToken();
+		} catch (\Exception $e) {
+			echo "Caught exception: ". $e->getMessage() . "\n";
+		}		
+		
+		// set $this->accessToken from new access token received from server
+		$this->accessToken = $res->access_token;
+
+		// set $this->cookie with token, ei, eid
+        $this->setCookie([
+            "token" => $this->accessToken,
+            "ei"    => $res->ei,
+            "eid"   => $res->expire_in
+        ], $res->ei);
+		
+		return $this->cookie;
+	}
 
     /**
      * Have Cookie
@@ -218,6 +233,7 @@ class Client
         
         if($domain) {
             if(static::$config["share_domain"] == true) {
+            	setcookie("SKH_API_COOKIE", null, -1, "/", $domain);
                 setcookie("SKH_API_COOKIE", $this->cookie, $time, $path, $this->getDomain($domain));
             } else {
                 setcookie("SKH_API_COOKIE", $this->cookie, $time, $path, $domain);
