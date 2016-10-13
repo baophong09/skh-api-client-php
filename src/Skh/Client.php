@@ -282,7 +282,7 @@ class Client
 
             $this->setCookie($data, $res->ei);
         } else if(isset($res->errors->need_get_access_token) && $res->errors->need_get_access_token == 1) {
-            $this->getAccessToken();
+            $this->extendToken();
         }
 
         // return json
@@ -319,7 +319,7 @@ class Client
 
             $this->setCookie($data, $res->ei);
         } else if(isset($res->errors->need_get_access_token) && $res->errors->need_get_access_token == 1) {
-            $this->getAccessToken();
+            $this->extendToken();
         }
 
         return $response;
