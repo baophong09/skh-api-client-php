@@ -9,18 +9,12 @@
     ],
     "require": {
         "php": ">=5.5.0",
-        "baophong09/php-jwt": "dev-master",
+        "baophong09/php-jwt": "5.1.0",
         "guzzlehttp/guzzle": "~6.0"
     },
     "autoload": {
         "psr-4": {
             "Skh\\": "src/Skh/"
         }
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "1.0-dev"
-        }
-    },
-    "minimum-stability": "dev"
+    }
 }
