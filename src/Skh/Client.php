@@ -34,6 +34,11 @@ class Client
     public static $config;
 
     /**
+     * @var $check | Check public && secret key
+     */
+    public $check;
+
+    /**
      * @var $accessToken Current access Token
      */
     public $accessToken;
@@ -117,6 +122,7 @@ class Client
      */
     public function __construct($publicKey, $secretKey, $type)
     {
+        $this->check = true;
         $this->publicKey = $publicKey;
         $this->secretKey = md5($secretKey.$publicKey);
 
@@ -127,8 +133,8 @@ class Client
         $this->token = new Token($this->secretKey);
 
         $this->cookie = isset($_COOKIE["SKH_API_COOKIE"]) ? $_COOKIE["SKH_API_COOKIE"] : "";
-        
-		if($this->cookie) {		
+
+		if($this->cookie) {
         	$cookie = $this->token->decrypt($this->cookie);
 		} else {
 			$cookie = null;
@@ -136,17 +142,58 @@ class Client
 
 		// auto renew before expired day three days
         if($cookie == null || (($cookie->ei - 259200) <= time())) {
-            
-
 			// set new $this->cookie
             $this->extendToken();
 
 			// Decrypt cookie
             $cookie = $this->token->decrypt($this->cookie);
+        } else {
+
+            // If not renew, check public key && secret key
+            $this->check();
         }
 
         $this->accessToken = isset($cookie->token) ? $cookie->token : "";
-    
+
+    }
+
+    public function decode($token)
+    {
+        $decrypted = $this->token->decrypt($token);
+        return $decrypted;
+    }
+
+    public function getCheckKey()
+    {
+        return $this->check;
+    }
+
+    public function check()
+    {
+        try {
+            $this->postCheckKey();
+        } catch (\Exception $e) {
+            $this->check = false;
+            // echo "Caught exception: ". $e->getMessage() . "\n";
+        }
+    }
+
+    public function postCheckKey()
+    {
+        $response = $this->post('token/check', [
+            'verify_token'  =>  $this->getVerifyApplicationToken($this->publicKey, $this->secretKey, $this->cookie),
+            'public_key'    =>  $this->publicKey
+        ]);
+
+        $res = json_decode($response);
+
+        if(isset($res->success) && $res && $res->success === true) {
+            return $res;
+        } else {
+            throw new \Exception("Check Public key && Secret key again");
+        }
+
+        return false;
     }
 
     /**
@@ -171,31 +218,36 @@ class Client
             throw new \Exception("Check Public key && Secret key again");
         }
 
-        return $res;
+        return false;
     }
-	
+
 	/**
 	 * Renew token with new expired time
 	 */
 	public function extendToken()
-	{    
+	{
 		try {
 			$res = $this->getAccessToken();
 		} catch (\Exception $e) {
-			echo "Caught exception: ". $e->getMessage() . "\n";
-		}		
-		
-		// set $this->accessToken from new access token received from server
-		$this->accessToken = $res->access_token;
+            $this->check = false;
+			// echo "Caught exception: ". $e->getMessage() . "\n";
+		}
 
-		// set $this->cookie with token, ei, eid
-        $this->setCookie([
-            "token" => $this->accessToken,
-            "ei"    => $res->ei,
-            "eid"   => $res->expire_in
-        ], $res->ei);
-		
-		return $this->cookie;
+        if($res) {
+    		// set $this->accessToken from new access token received from server
+    		$this->accessToken = $res->access_token;
+
+    		// set $this->cookie with token, ei, eid
+            $this->setCookie([
+                "token" => $this->accessToken,
+                "ei"    => $res->ei,
+                "eid"   => $res->expire_in
+            ], $res->ei);
+
+    		return $this->cookie;
+        }
+
+        return false;
 	}
 
     /**
@@ -207,7 +259,7 @@ class Client
     {
         if (isset($this->cookie) && $this->cookie) {
             $cookie = $this->token->decrypt($this->cookie);
-            
+
             if(!$cookie || $cookie->ei <= time()) {
                 return false;
             }
@@ -227,16 +279,15 @@ class Client
      */
     public function setCookie($data, $time, $path = '/', $test = false)
     {
-        
+
         $this->cookie = $this->token->encrypt($data);
 
-
         $domain = isset($_SERVER["SERVER_NAME"]) ? $_SERVER["SERVER_NAME"] : "";
-                
+
         if($domain) {
             if(static::$config["share_domain"] == true) {
             	setcookie("SKH_API_COOKIE", null, -1, "/", $domain);
-                setcookie("SKH_API_COOKIE", $this->cookie, $time, $path, $this->getDomain($domain));             
+                setcookie("SKH_API_COOKIE", $this->cookie, $time, $path, $this->getDomain($domain));
             } else {
                 setcookie("SKH_API_COOKIE", $this->cookie, $time, $path, $domain);
             }
@@ -282,8 +333,6 @@ class Client
                 "eid"   => $res->expire_in
             ];
 
-            
-            
             $this->setCookie($data, $res->ei, '/');
         } else if(isset($res->errors->need_get_access_token) && $res->errors->need_get_access_token == 1) {
             $this->extendToken();

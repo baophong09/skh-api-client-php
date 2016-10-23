@@ -19,7 +19,7 @@ class CurlRequest implements RequestInterface
             $this->curl = curl_init();
         }
 
-        $this->url = filter_var(trim($url,'&'), FILTER_SANITIZE_URL);
+        $this->url = trim($url,'&');
 
         curl_setopt($this->curl, CURLOPT_URL, $this->url);
         curl_setopt($this->curl, CURLOPT_RETURNTRANSFER, true);
