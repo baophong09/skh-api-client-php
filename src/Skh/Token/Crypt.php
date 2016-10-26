@@ -2,7 +2,7 @@
 
 namespace Skh\Token;
 
-use \Firebase\JWT\JWT as JWT;
+use \Baophong09\JWT\JWT as JWT;
 
 class Crypt
 {
