@@ -76,7 +76,7 @@ class Client
     /**
      * VERSION: Version of API
      */
-    const VERSION = 'v1/';
+    const VERSION = 'v2/';
 
     /**
      * @static Get current instance
@@ -148,7 +148,6 @@ class Client
 			// Decrypt cookie
             $cookie = $this->token->decrypt($this->cookie);
         } else {
-
             // If not renew, check public key && secret key
             $this->check();
         }
@@ -322,21 +321,7 @@ class Client
 
         $response = $this->request->request('GET', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
 
-        $res = json_decode($response);
-
-        if (isset($res->access_token) && $res->access_token) {
-            $this->accessToken = $res->access_token;
-
-            $data = [
-                "token" => $this->accessToken,
-                "ei"    => $res->ei,
-                "eid"   => $res->expire_in
-            ];
-
-            $this->setCookie($data, $res->ei, '/');
-        } else if(isset($res->errors->need_get_access_token) && $res->errors->need_get_access_token == 1) {
-            $this->extendToken();
-        }
+        $this->checkAccessTokenAndSetCookie($response);
 
         // return json
         return $response;
@@ -352,29 +337,13 @@ class Client
      */
     public function post($url, $params = [])
     {
-        // $params = json_encode($params);
-
         $accessToken = $this->accessToken;
 
         $response = $this->request->request('POST', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
 
-        $res = json_decode($response);
+        $this->checkAccessTokenAndSetCookie($response);      
 
-        if (isset($res->access_token) && $res->access_token) {
-
-            $this->accessToken = $res->access_token;
-
-            $data = [
-                "token" => $this->accessToken,
-                "ei"    => $res->ei,
-                "eid"   => $res->expire_in
-            ];
-
-            $this->setCookie($data, $res->ei);
-        } else if(isset($res->errors->need_get_access_token) && $res->errors->need_get_access_token == 1) {
-            $this->extendToken();
-        }
-
+        // return json
         return $response;
     }
 
@@ -389,7 +358,11 @@ class Client
     public function put($url, $params = [])
     {
         $accessToken = $this->accessToken;
+        $response = $this->request->request('PUT', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
 
+        $this->checkAccessTokenAndSetCookie();
+
+        return $response;
     }
 
     /**
@@ -404,6 +377,38 @@ class Client
     {
         $accessToken = $this->accessToken;
 
+        $response = $this->request->request('DELETE', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
+
+        $this->checkAccessTokenAndSetCookie();
+
+        return $response;
+    }
+
+    /**
+     * Check if access token return and set cookie 
+     *
+     * @param Json $response | Response from request
+     *
+     * @return void setCookie() or extendToken()
+     */
+    private function checkAccessTokenAndSetCookie($response)
+    {
+        $res = json_decode($response);
+
+        if (isset($res->access_token) && $res->access_token) {
+
+            $this->accessToken = $res->access_token;
+
+            $data = [
+                "token" => $this->accessToken,
+                "ei"    => $res->ei,
+                "eid"   => $res->expire_in
+            ];
+
+            $this->setCookie($data, $res->ei, '/');
+        } else if(isset($res->errors->need_get_access_token) && $res->errors->need_get_access_token == 1) {
+            $this->extendToken();
+        }
     }
 
     /**
