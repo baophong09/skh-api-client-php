@@ -142,6 +142,10 @@ class Client
 
 		// auto renew before expired day three days
         if($cookie == null || (($cookie->ei - 259200) <= time())) {
+
+            // set access token before extend
+            $this->accessToken = isset($cookie->token) ? $cookie->token : "";
+
 			// set new $this->cookie
             $this->extendToken();
 
@@ -278,7 +282,6 @@ class Client
      */
     public function setCookie($data, $time, $path = '/', $test = false)
     {
-
         $this->cookie = $this->token->encrypt($data);
 
         $domain = isset($_SERVER["SERVER_NAME"]) ? $_SERVER["SERVER_NAME"] : "";
@@ -341,7 +344,7 @@ class Client
 
         $response = $this->request->request('POST', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
 
-        $this->checkAccessTokenAndSetCookie($response);      
+        $this->checkAccessTokenAndSetCookie($response);
 
         // return json
         return $response;
@@ -385,7 +388,7 @@ class Client
     }
 
     /**
-     * Check if access token return and set cookie 
+     * Check if access token return and set cookie
      *
      * @param Json $response | Response from request
      *
