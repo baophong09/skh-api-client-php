@@ -32,6 +32,7 @@ class CurlRequest implements RequestInterface
 
             case 'DELETE':
                 curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'DELETE');
+                curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($params));
                 break;
         }
 
@@ -40,7 +41,7 @@ class CurlRequest implements RequestInterface
             'Accept: application/json',
             'Content-Type: application/json',
             'Authorization: Bearer '.$token
-        )); 
+        ));
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, TRUE);
 
