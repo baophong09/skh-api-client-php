@@ -363,7 +363,7 @@ class Client
         $accessToken = $this->accessToken;
         $response = $this->request->request('PUT', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
 
-        $this->checkAccessTokenAndSetCookie();
+        $this->checkAccessTokenAndSetCookie($response);
 
         return $response;
     }
@@ -382,7 +382,7 @@ class Client
 
         $response = $this->request->request('DELETE', self::API_SERVER . self::VERSION . $url, $params, $accessToken);
 
-        $this->checkAccessTokenAndSetCookie();
+        $this->checkAccessTokenAndSetCookie($response);
 
         return $response;
     }
